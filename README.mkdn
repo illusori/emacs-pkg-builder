@@ -1,0 +1,25 @@
+Emacs pkg builder
+=================
+
+emacs-pkg-builder is a simple shells script to help bundle up Emacs
+packages for release.
+
+You can just run `emacs-pkg-builder` within the package directory,
+and it will attempt to determine the package name from the directory
+name, or you can supply the package name via the command line with
+`emacs-pkg-builder -p package-name`.
+
+emacs-pkg-builder then looks for a package-name.el and extracts
+standard GNU/ELPA/Marmalade ELISP header comments to determine
+package version, package description and package prerequisites.
+
+Using these extracted values it creates a package-name-pkg.el
+in the format expected by ELPA/Marmalade.
+
+Finally it creates a tarball named package-name-version.tar
+in the current directory, containing the contents of the current
+working directory and subdirectories, laid out in the format
+required by ELPA/Marmalade for multi-file packages.
+
+.dotfiles and tarballs are excluded when generating the release
+tarball.

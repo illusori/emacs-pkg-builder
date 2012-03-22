@@ -1,0 +1,65 @@
+#!/bin/bash
+
+showhelp() {
+echo "emacs-pkg-builder [-p <pkg-name>]
+
+Build an Emacs package named pkg-name from the current directory, suitable for
+uploading to ELPA/Marmalade or another package.el-compatable repository.";
+exit 0;
+}
+
+while getopts "h" "OPTNAME";
+do
+    case $OPTNAME in
+        p) PKGNAME=$OPTARG ;;
+        h) showhelp        ;;
+        *) exit -1         ;;
+    esac
+done
+shift $(($OPTIND - 1))
+
+if [ -z "$PKGNAME" ]; then
+    # No package name provided, try to guess from the directory name.
+    # This heuristic is entirely based on my personal preferences and
+    # highly likely to break for other people.
+    PKGNAME=$(basename $(pwd) | sed -e 's/^emacs-//')
+fi
+
+echo "Building package $PKGNAME..."
+
+PKGMAIN="${PKGNAME}.el"
+PKGPKG="${PKGNAME}-pkg.el"
+
+echo -n "Extracting package details from ${PKGMAIN}..."
+PKGVERSION=$(grep ";; Version:" "$PKGMAIN" | sed -e 's/^;; *Version: *//')
+PKGDESC=$(grep ";;; ${PKGMAIN} ---" "$PKGMAIN" | sed -e 's/^.*--- *//')
+# ROFLMAO
+PKGREQUIRES=$(egrep "^;;" "$PKGMAIN" | sed -e 's/^;; *//' | paste -s -d " " - | sed -n -e 's/.*Package-Requires:\ *\(((.*))\).*/\1/p')
+echo " done."
+
+echo "  Package Version:     $PKGVERSION"
+echo "  Package Description: $PKGDESC"
+echo "  Package Requires:    $PKGREQUIRES"
+
+PKGNAMEVERSION="${PKGNAME}-${PKGVERSION}"
+PKGTARBALL="${PKGNAMEVERSION}.tar"
+
+echo -n "Writing ${PKGPKG}..."
+echo -n "(define-package \"${PKGNAME}\" \"${PKGVERSION}\"" >"$PKGPKG"
+if [ -n "$PKGDESC" ]; then
+    echo >>"$PKGPKG"
+    echo -n "                \"${PKGDESC}\"" >>"$PKGPKG"
+fi
+if [ -n "$PKGREQUIRES" ]; then
+    echo >>"$PKGPKG"
+    echo -n "                '${PKGREQUIRES}" >>"$PKGPKG"
+fi
+echo ")" >>"$PKGPKG"
+echo " done."
+
+echo -n "Creating tarball ${PKGTARBALL}..."
+
+DIR=$(basename $(pwd))
+tar -C .. -cf "${PKGTARBALL}" --exclude '*.tar' --exclude '.*' --exclude '*~' -s "/^${DIR}/${PKGNAMEVERSION}/" "$DIR"
+
+echo " done."
