@@ -49,10 +49,16 @@ echo -n "(define-package \"${PKGNAME}\" \"${PKGVERSION}\"" >"$PKGPKG"
 if [ -n "$PKGDESC" ]; then
     echo >>"$PKGPKG"
     echo -n "                \"${PKGDESC}\"" >>"$PKGPKG"
+else
+    echo >>"$PKGPKG"
+    echo -n "                nil" >>"$PKGPKG"
 fi
 if [ -n "$PKGREQUIRES" ]; then
     echo >>"$PKGPKG"
     echo -n "                '${PKGREQUIRES}" >>"$PKGPKG"
+else
+    echo >>"$PKGPKG"
+    echo -n "                '()" >>"$PKGPKG"
 fi
 echo ")" >>"$PKGPKG"
 echo " done."
